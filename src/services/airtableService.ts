@@ -181,6 +181,12 @@ class AirtableService {
     });
   }
 
+  async searchInstallers(searchTerm: string): Promise<AirtableResponse> {
+    const encodedSearch = encodeURIComponent(searchTerm);
+    const formula = `OR(FIND(LOWER("${encodedSearch}"), LOWER({entreprise})), FIND(LOWER("${encodedSearch}"), LOWER({nom})), FIND(LOWER("${encodedSearch}"), LOWER({email})))`;
+    return this.makeRequest(`/Installateurs?filterByFormula=${encodeURIComponent(formula)}&sort[0][field]=entreprise&sort[0][direction]=asc&maxRecords=10`);
+  }
+
   // Rapports Installateurs
   async getInstallerReports(): Promise<AirtableResponse> {
     return this.makeRequest('/Rapports_Installateurs?sort[0][field]=date_reception&sort[0][direction]=desc');

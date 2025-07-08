@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, ShoppingCart, DollarSign, Truck, BarChart3, Plus, Search, Filter, Settings, Users, FileText } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, Truck, BarChart3, Plus, Search, Filter, Settings, Users, FileText, MapPin } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Orders from './components/Orders';
 import Stock from './components/Stock';
@@ -7,6 +7,7 @@ import Costs from './components/Costs';
 import Shipments from './components/Shipments';
 import ProductManagement from './components/ProductManagement';
 import InstallerReports from './components/InstallerReports';
+import TrackingDashboard from './components/TrackingDashboard';
 
 function App() {
   const [activeModule, setActiveModule] = useState('dashboard');
@@ -18,6 +19,7 @@ function App() {
     { id: 'stock', name: 'Stock', icon: Package },
     { id: 'costs', name: 'Coûts', icon: DollarSign },
     { id: 'shipments', name: 'Envois', icon: Truck },
+    { id: 'tracking', name: 'Suivi Livraisons', icon: MapPin },
     { id: 'installer-reports', name: 'Rapports Installateurs', icon: FileText },
   ];
 
@@ -35,6 +37,8 @@ function App() {
         return <Costs />;
       case 'shipments':
         return <Shipments />;
+      case 'tracking':
+        return <TrackingDashboard />;
       case 'installer-reports':
         return <InstallerReports />;
       default:

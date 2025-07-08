@@ -5,61 +5,78 @@ const Stock = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [formData, setFormData] = useState({
+    nom: '',
+    categorie: 'Panneau',
+    stock: 0,
+    seuil: 10,
+    prix: 0,
+    fournisseur: '',
+    emplacement: '',
+    description: '',
+    reference: ''
+  });
 
-  const products = [
-    {
-      id: 'PRD-001',
-      nom: 'Produit Solaire A',
-      categorie: 'Panneau',
-      stock: 45,
-      seuil: 10,
-      prix: 150.00,
-      fournisseur: 'Fournisseur Solar',
-      emplacement: 'A-01'
-    },
-    {
-      id: 'PRD-002',
-      nom: 'Batterie Lithium',
-      categorie: 'Batterie',
-      stock: 5,
-      seuil: 10,
-      prix: 450.00,
-      fournisseur: 'Energy Plus',
-      emplacement: 'B-03'
-    },
-    {
-      id: 'PRD-003',
-      nom: 'Onduleur 3000W',
-      categorie: 'Onduleur',
-      stock: 23,
-      seuil: 5,
-      prix: 320.00,
-      fournisseur: 'Tech Solar',
-      emplacement: 'C-02'
-    },
-    {
-      id: 'PRD-004',
-      nom: 'Câble MC4',
-      categorie: 'Accessoire',
-      stock: 2,
-      seuil: 15,
-      prix: 25.00,
-      fournisseur: 'Cableco',
-      emplacement: 'D-01'
+  const { data: products, loading, error, refetch } = useAirtable('stock');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingProduct) {
+        await airtableService.updateProduct(editingProduct.id, { fields: formData });
+      } else {
+        await airtableService.createProduct({ fields: formData });
+      }
+      setShowAddForm(false);
+      setEditingProduct(null);
+      setFormData({
+        nom: '',
+        categorie: 'Panneau',
+        stock: 0,
+        seuil: 10,
+        prix: 0,
+        fournisseur: '',
+        emplacement: '',
+        description: '',
+        reference: ''
+      });
+      refetch();
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
     }
-  ];
+  };
 
+  const handleEdit = (product) => {
+    setEditingProduct(product);
+    setFormData(product.fields);
+    setShowAddForm(true);
+  };
+
+  const handleDelete = async (productId) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+      try {
+        await airtableService.deleteProduct(productId);
+        refetch();
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+      }
+    }
+  };
   const categories = ['all', 'Panneau', 'Batterie', 'Onduleur', 'Accessoire', 'Câblage', 'Structure', 'Pinces'];
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const fields = product.fields;
+    const matchesSearch = fields.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || product.categorie === categoryFilter;
+    const matchesCategory = categoryFilter === 'all' || fields.categorie === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const lowStockCount = products.filter(product => product.stock <= product.seuil).length;
+  const lowStockCount = products.filter(product => (product.fields.stock || 0) <= (product.fields.seuil || 0)).length;
 
+  if (loading) return <div className="flex justify-center items-center h-64">Chargement...</div>;
+  if (error) return <div className="text-red-600 text-center">Erreur: {error}</div>;
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -99,7 +116,7 @@ const Stock = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Stock total</p>
-              <p className="text-2xl font-bold text-gray-900">{products.reduce((sum, p) => sum + p.stock, 0)}</p>
+              <p className="text-2xl font-bold text-gray-900">{products.reduce((sum, p) => sum + (p.fields.stock || 0), 0)}</p>
             </div>
             <div className="p-3 rounded-full bg-blue-100">
               <Package className="w-6 h-6 text-blue-600" />
@@ -153,32 +170,42 @@ const Stock = () => {
       {/* Add Product Form */}
       {showAddForm && (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Nouveau produit</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
+          </h2>
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nom du produit</label>
               <input
                 type="text"
+                required
+                value={formData.nom}
+                onChange={(e) => setFormData({...formData, nom: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 placeholder="Nom du produit"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                <option>Panneau</option>
-                <option>Batterie</option>
-                <option>Onduleur</option>
-                <option>Accessoire</option>
-                <option>Câblage</option>
-                <option>Structure</option>
-                <option>Pinces</option>
+              <select 
+                required
+                value={formData.categorie}
+                onChange={(e) => setFormData({...formData, categorie: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                {categories.slice(1).map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Stock initial</label>
               <input
                 type="number"
+                min="0"
+                value={formData.stock}
+                onChange={(e) => setFormData({...formData, stock: parseInt(e.target.value) || 0})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 placeholder="0"
               />
@@ -187,6 +214,9 @@ const Stock = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Seuil d'alerte</label>
               <input
                 type="number"
+                min="0"
+                value={formData.seuil}
+                onChange={(e) => setFormData({...formData, seuil: parseInt(e.target.value) || 0})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 placeholder="0"
               />
@@ -196,6 +226,9 @@ const Stock = () => {
               <input
                 type="number"
                 step="0.01"
+                min="0"
+                value={formData.prix}
+                onChange={(e) => setFormData({...formData, prix: parseFloat(e.target.value) || 0})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 placeholder="0.00"
               />
@@ -204,22 +237,32 @@ const Stock = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Emplacement</label>
               <input
                 type="text"
+                value={formData.emplacement}
+                onChange={(e) => setFormData({...formData, emplacement: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 placeholder="A-01"
               />
             </div>
-          </div>
-          <div className="mt-4 flex justify-end space-x-2">
+            </div>
+            <div className="mt-4 flex justify-end space-x-2">
             <button
-              onClick={() => setShowAddForm(false)}
+              type="button"
+              onClick={() => {
+                setShowAddForm(false);
+                setEditingProduct(null);
+              }}
               className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               Annuler
             </button>
-            <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-              Ajouter le produit
+            <button 
+              type="submit"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              {editingProduct ? 'Modifier' : 'Ajouter'} le produit
             </button>
-          </div>
+            </div>
+          </form>
         </div>
       )}
 
@@ -257,42 +300,48 @@ const Stock = () => {
                 <tr key={product.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{product.nom}</div>
+                      <div className="text-sm font-medium text-gray-900">{product.fields.nom}</div>
                       <div className="text-sm text-gray-500">{product.id}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {product.categorie}
+                    {product.fields.categorie}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <span className="text-sm text-gray-900">{product.stock}</span>
-                      {product.stock <= product.seuil && (
+                      <span className="text-sm text-gray-900">{product.fields.stock || 0}</span>
+                      {(product.fields.stock || 0) <= (product.fields.seuil || 0) && (
                         <AlertTriangle className="w-4 h-4 text-orange-500 ml-2" />
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {product.prix.toLocaleString('fr-FR')} €
+                    {(product.fields.prix || 0).toLocaleString('fr-FR')} €
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {product.emplacement}
+                    {product.fields.emplacement}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      product.stock <= product.seuil
+                      (product.fields.stock || 0) <= (product.fields.seuil || 0)
                         ? 'bg-orange-100 text-orange-800'
                         : 'bg-green-100 text-green-800'
                     }`}>
-                      {product.stock <= product.seuil ? 'Stock faible' : 'Stock OK'}
+                      {(product.fields.stock || 0) <= (product.fields.seuil || 0) ? 'Stock faible' : 'Stock OK'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center space-x-2">
-                      <button className="text-green-600 hover:text-green-900">
+                      <button 
+                        onClick={() => handleEdit(product)}
+                        className="text-green-600 hover:text-green-900"
+                      >
                         <Edit3 className="w-4 h-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button 
+                        onClick={() => handleDelete(product.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -306,5 +355,9 @@ const Stock = () => {
     </div>
   );
 };
+
+// Import nécessaire en haut du fichier
+import { useAirtable } from '../hooks/useAirtable';
+import airtableService from '../services/airtableService';
 
 export default Stock;

@@ -33,6 +33,12 @@ export const useAirtable = (table: string) => {
           case 'installer-reports':
             result = await airtableService.getInstallerReports();
             break;
+          case 'purchases':
+            result = await airtableService.getPurchases();
+            break;
+          case 'suppliers':
+            result = await airtableService.getSuppliers();
+            break;
           default:
             result = await airtableService.getData(table);
         }
@@ -76,6 +82,18 @@ export const useAirtable = (table: string) => {
         case 'installer-reports':
           result = await airtableService.getInstallerReports();
           break;
+        case 'purchases':
+          result = await airtableService.getPurchases();
+          break;
+        case 'suppliers':
+          result = await airtableService.getSuppliers();
+          break;
+        case 'purchases':
+          result = await airtableService.getPurchases();
+          break;
+        case 'suppliers':
+          result = await airtableService.getSuppliers();
+          break;
         default:
           result = await airtableService.getData(table);
       }
@@ -109,6 +127,12 @@ export const useAirtable = (table: string) => {
         case 'installer-reports':
           result = await airtableService.createInstallerReport({ fields });
           break;
+        case 'purchases':
+          result = await airtableService.createPurchase({ fields });
+          break;
+        case 'suppliers':
+          result = await airtableService.createSupplier({ fields });
+          break;
         default:
           throw new Error(`Création non supportée pour la table ${table}`);
       }
@@ -140,6 +164,9 @@ export const useAirtable = (table: string) => {
         case 'installer-reports':
           result = await airtableService.updateInstallerReport(id, { fields });
           break;
+        case 'purchases':
+          result = await airtableService.updatePurchase(id, { fields });
+          break;
         default:
           throw new Error(`Mise à jour non supportée pour la table ${table}`);
       }
@@ -167,6 +194,9 @@ export const useAirtable = (table: string) => {
           break;
         case 'shipments':
           result = await airtableService.deleteShipment(id);
+          break;
+        case 'purchases':
+          result = await airtableService.deletePurchase(id);
           break;
         default:
           throw new Error(`Suppression non supportée pour la table ${table}`);

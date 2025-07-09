@@ -11,6 +11,7 @@ const Shipments = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingShipment, setEditingShipment] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     commande: '',
     destinataire: '',
@@ -25,6 +26,7 @@ const Shipments = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
       if (editingShipment) {
         await airtableService.updateShipment(editingShipment.id, { fields: formData });
@@ -44,15 +46,28 @@ const Shipments = () => {
         date_livraison: '',
         couts: 0
       });
-      refetch();
+      await refetch();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      alert('Erreur lors de la sauvegarde: ' + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEdit = (shipment) => {
     setEditingShipment(shipment);
-    setFormData(shipment.fields);
+    setFormData({
+      commande: shipment.fields.commande || '',
+      destinataire: shipment.fields.destinataire || '',
+      adresse: shipment.fields.adresse || '',
+      transporteur: shipment.fields.transporteur || 'Chronopost',
+      tracking_number: shipment.fields.tracking_number || '',
+      statut: shipment.fields.statut || 'Préparation',
+      date_expedition: shipment.fields.date_expedition || new Date().toISOString().split('T')[0],
+      date_livraison: shipment.fields.date_livraison || '',
+      couts: shipment.fields.couts || 0
+    });
     setShowAddForm(true);
   };
 
@@ -60,9 +75,10 @@ const Shipments = () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet envoi ?')) {
       try {
         await airtableService.deleteShipment(shipmentId);
-        refetch();
+        await refetch();
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
+        alert('Erreur lors de la suppression: ' + error.message);
       }
     }
   };
@@ -314,9 +330,10 @@ const Shipments = () => {
             </button>
             <button 
               type="submit"
+              disabled={saving}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              {editingShipment ? 'Modifier' : 'Créer'} l'envoi
+              {saving ? 'Sauvegarde...' : (editingShipment ? 'Modifier' : 'Créer')} l'envoi
             </button>
             </div>
           </form>

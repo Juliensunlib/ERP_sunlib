@@ -6,6 +6,7 @@ const Costs = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCost, setEditingCost] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     description: '',
     type: 'Achat',
@@ -20,6 +21,7 @@ const Costs = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
       if (editingCost) {
         await airtableService.updateCost(editingCost.id, { fields: formData });
@@ -37,15 +39,26 @@ const Costs = () => {
         tva: 20,
         statut: 'En attente'
       });
-      refetch();
+      await refetch();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      alert('Erreur lors de la sauvegarde: ' + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEdit = (cost) => {
     setEditingCost(cost);
-    setFormData(cost.fields);
+    setFormData({
+      description: cost.fields.description || '',
+      type: cost.fields.type || 'Achat',
+      montant: cost.fields.montant || 0,
+      date: cost.fields.date || new Date().toISOString().split('T')[0],
+      fournisseur: cost.fields.fournisseur || '',
+      tva: cost.fields.tva || 20,
+      statut: cost.fields.statut || 'En attente'
+    });
     setShowAddForm(true);
   };
 
@@ -53,9 +66,10 @@ const Costs = () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce coût ?')) {
       try {
         await airtableService.deleteCost(costId);
-        refetch();
+        await refetch();
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
+        alert('Erreur lors de la suppression: ' + error.message);
       }
     }
   };
@@ -260,9 +274,10 @@ const Costs = () => {
             </button>
             <button 
               type="submit"
+              disabled={saving}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              {editingCost ? 'Modifier' : 'Ajouter'} le coût
+              {saving ? 'Sauvegarde...' : (editingCost ? 'Modifier' : 'Ajouter')} le coût
             </button>
             </div>
           </form>

@@ -227,7 +227,7 @@ const SupplierAutocomplete: React.FC<SupplierAutocompleteProps> = ({
       {/* Formulaire d'ajout de fournisseur */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Nouveau fournisseur</h3>
             <form onSubmit={handleAddNewSupplier}>
               <div className="space-y-4">
@@ -328,7 +328,7 @@ const SupplierAutocomplete: React.FC<SupplierAutocompleteProps> = ({
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end space-x-2">
+              <div className="mt-6 flex justify-end space-x-2 sticky bottom-0 bg-white pt-4 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}

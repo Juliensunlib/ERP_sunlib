@@ -206,6 +206,64 @@ class AirtableService {
     });
   }
 
+  // Achats
+  async getPurchases(): Promise<AirtableResponse> {
+    return this.makeRequest('/Achats?sort[0][field]=date_commande&sort[0][direction]=desc');
+  }
+
+  async createPurchase(purchase: AirtableRecord): Promise<AirtableRecord> {
+    return this.makeRequest('/Achats', {
+      method: 'POST',
+      body: JSON.stringify({ fields: purchase.fields }),
+    });
+  }
+
+  async updatePurchase(id: string, purchase: AirtableRecord): Promise<AirtableRecord> {
+    return this.makeRequest(`/Achats/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: purchase.fields }),
+    });
+  }
+
+  async deletePurchase(id: string): Promise<{ deleted: boolean; id: string }> {
+    return this.makeRequest(`/Achats/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Upload de facture PDF
+  async uploadPurchaseInvoice(purchaseId: string, file: File): Promise<AirtableRecord> {
+    const formData = new FormData();
+    formData.append('facture_pdf', file);
+    
+    return this.makeRequest(`/Achats/${purchaseId}`, {
+      method: 'PATCH',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+        // Ne pas définir Content-Type pour FormData
+      },
+    });
+  }
+
+  // Fournisseurs
+  async getSuppliers(): Promise<AirtableResponse> {
+    return this.makeRequest('/Fournisseurs?sort[0][field]=nom&sort[0][direction]=asc');
+  }
+
+  async createSupplier(supplier: AirtableRecord): Promise<AirtableRecord> {
+    return this.makeRequest('/Fournisseurs', {
+      method: 'POST',
+      body: JSON.stringify({ fields: supplier.fields }),
+    });
+  }
+
+  async searchSuppliers(searchTerm: string): Promise<AirtableResponse> {
+    const encodedSearch = encodeURIComponent(searchTerm);
+    const formula = `OR(FIND(LOWER("${encodedSearch}"), LOWER({nom})), FIND(LOWER("${encodedSearch}"), LOWER({contact})), FIND(LOWER("${encodedSearch}"), LOWER({email})))`;
+    return this.makeRequest(`/Fournisseurs?filterByFormula=${encodeURIComponent(formula)}&sort[0][field]=nom&sort[0][direction]=asc&maxRecords=10`);
+  }
+
   // Méthode générique pour récupérer des données
   async getData(tableName: string): Promise<AirtableResponse> {
     return this.makeRequest(`/${tableName}`);

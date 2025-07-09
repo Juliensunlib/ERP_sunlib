@@ -9,6 +9,7 @@ const ProductManagement = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     nom: '',
     categorie: 'Panneau',
@@ -25,6 +26,7 @@ const ProductManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
       if (editingProduct) {
         await airtableService.updateProduct(editingProduct.id, { fields: formData });
@@ -44,15 +46,28 @@ const ProductManagement = () => {
         description: '',
         reference: ''
       });
-      refetch();
+      await refetch();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      alert('Erreur lors de la sauvegarde: ' + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEdit = (product) => {
     setEditingProduct(product);
-    setFormData(product.fields);
+    setFormData({
+      nom: product.fields.nom || '',
+      categorie: product.fields.categorie || 'Panneau',
+      stock: product.fields.stock || 0,
+      seuil: product.fields.seuil || 10,
+      prix: product.fields.prix || 0,
+      fournisseur: product.fields.fournisseur || '',
+      emplacement: product.fields.emplacement || '',
+      description: product.fields.description || '',
+      reference: product.fields.reference || ''
+    });
     setShowAddForm(true);
   };
 
@@ -60,9 +75,10 @@ const ProductManagement = () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       try {
         await airtableService.deleteProduct(productId);
-        refetch();
+        await refetch();
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
+        alert('Erreur lors de la suppression: ' + error.message);
       }
     }
   };
@@ -73,9 +89,10 @@ const ProductManagement = () => {
       await airtableService.updateProduct(productId, {
         fields: { ...product.fields, stock: newStock }
       });
-      refetch();
+      await refetch();
     } catch (error) {
       console.error('Erreur lors de la mise à jour du stock:', error);
+      alert('Erreur lors de la mise à jour du stock: ' + error.message);
     }
   };
 
@@ -277,10 +294,11 @@ const ProductManagement = () => {
               </button>
               <button
                 type="submit"
+                disabled={saving}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
               >
                 <Save className="w-4 h-4" />
-                <span>{editingProduct ? 'Modifier' : 'Créer'}</span>
+                <span>{saving ? 'Sauvegarde...' : (editingProduct ? 'Modifier' : 'Créer')}</span>
               </button>
             </div>
           </form>

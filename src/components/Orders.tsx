@@ -10,6 +10,7 @@ const Orders = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     client: '',
     client_id: '',
@@ -30,6 +31,7 @@ const Orders = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
       if (editingOrder) {
         await airtableService.updateOrder(editingOrder.id, { fields: formData });
@@ -47,15 +49,26 @@ const Orders = () => {
         articles: 1,
         notes: ''
       });
-      refetch();
+      await refetch();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      alert('Erreur lors de la sauvegarde: ' + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEdit = (order) => {
     setEditingOrder(order);
-    setFormData(order.fields);
+    setFormData({
+      client: order.fields.client || '',
+      client_id: order.fields.client_id || '',
+      date: order.fields.date || new Date().toISOString().split('T')[0],
+      montant: order.fields.montant || 0,
+      statut: order.fields.statut || 'En préparation',
+      articles: order.fields.articles || 1,
+      notes: order.fields.notes || ''
+    });
     setShowAddForm(true);
   };
 
@@ -63,9 +76,10 @@ const Orders = () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
       try {
         await airtableService.deleteOrder(orderId);
-        refetch();
+        await refetch();
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
+        alert('Erreur lors de la suppression: ' + error.message);
       }
     }
   };
@@ -279,9 +293,10 @@ const Orders = () => {
               </button>
               <button
                 type="submit"
+                disabled={saving}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               >
-                {editingOrder ? 'Modifier' : 'Créer'} la commande
+                {saving ? 'Sauvegarde...' : (editingOrder ? 'Modifier' : 'Créer')} la commande
               </button>
             </div>
           </form>

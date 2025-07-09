@@ -8,6 +8,7 @@ import Shipments from './components/Shipments';
 import ProductManagement from './components/ProductManagement';
 import InstallerReports from './components/InstallerReports';
 import TrackingDashboard from './components/TrackingDashboard';
+import PurchaseManagement from './components/PurchaseManagement';
 
 function App() {
   const [activeModule, setActiveModule] = useState('dashboard');
@@ -17,6 +18,7 @@ function App() {
     { id: 'orders', name: 'Commandes', icon: ShoppingCart },
     { id: 'products', name: 'Gestion Produits', icon: Settings },
     { id: 'stock', name: 'Stock', icon: Package },
+    { id: 'purchases', name: 'Achats', icon: DollarSign },
     { id: 'costs', name: 'Coûts', icon: DollarSign },
     { id: 'shipments', name: 'Envois', icon: Truck },
     { id: 'tracking', name: 'Suivi Livraisons', icon: MapPin },
@@ -33,6 +35,8 @@ function App() {
         return <ProductManagement />;
       case 'stock':
         return <Stock />;
+      case 'purchases':
+        return <PurchaseManagement />;
       case 'costs':
         return <Costs />;
       case 'shipments':

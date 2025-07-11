@@ -13,7 +13,7 @@ const Orders = () => {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     client: '',
-    client_id: '',
+    client_id: [],
     date: new Date().toISOString().split('T')[0],
     montant: 0,
     statut: 'En préparation',
@@ -42,7 +42,7 @@ const Orders = () => {
       setEditingOrder(null);
       setFormData({
         client: '',
-        client_id: '',
+        client_id: [],
         date: new Date().toISOString().split('T')[0],
         montant: 0,
         statut: 'En préparation',
@@ -62,7 +62,7 @@ const Orders = () => {
     setEditingOrder(order);
     setFormData({
       client: order.fields.client || '',
-      client_id: order.fields.client_id || '',
+      client_id: order.fields.client_id || [],
       date: order.fields.date || new Date().toISOString().split('T')[0],
       montant: order.fields.montant || 0,
       statut: order.fields.statut || 'En préparation',
@@ -88,7 +88,7 @@ const Orders = () => {
     setFormData({
       ...formData,
       client: clientName,
-      client_id: clientData?.id || ''
+      client_id: clientData?.id ? [clientData.id] : []
     });
   };
 
@@ -114,7 +114,7 @@ const Orders = () => {
             setEditingOrder(null);
             setFormData({
               client: '',
-              client_id: '',
+              client_id: [],
               date: new Date().toISOString().split('T')[0],
               montant: 0,
               statut: 'En préparation',

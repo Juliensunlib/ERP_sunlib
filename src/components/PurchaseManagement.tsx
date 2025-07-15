@@ -398,13 +398,13 @@ const PurchaseManagement = () => {
                 {formData.lignes.map((ligne, index) => (
                   <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 border border-gray-200 rounded-lg">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Produit</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Produit *</label>
                       <ProductAutocomplete
-                        value={ligne.produit}
+                        value={ligne.produit || ""}
                         onChange={(productName, product) => updateLineWithProduct(index, productName, product)}
                         onPriceChange={(price) => updateLinePrice(index, price)}
                         products={products}
-                        placeholder="Nom du produit"
+                        placeholder="Rechercher un produit..."
                         required
                       />
                     </div>
